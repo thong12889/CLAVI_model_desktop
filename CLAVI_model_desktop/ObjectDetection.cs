@@ -188,7 +188,8 @@ namespace CLAVI_model_desktop
         }
         public void Dispose()
         {
-
+            sess?.Dispose();
+            sess = null;
         }
     }
 }

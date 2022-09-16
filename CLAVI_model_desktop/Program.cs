@@ -12,7 +12,7 @@ namespace CLAVI_model_desktop
     {
         static void Main(string[] args)
         {
-            int mode = 1;
+            int mode = 2;
 
             if(mode == 1)
             {
@@ -21,10 +21,23 @@ namespace CLAVI_model_desktop
                 var labelPath_obj = "C:/Users/thong/Desktop/Clavi_desktop_onnx/model_obj/technopro_obj_labels.txt";
                 var image_obj = Cv2.ImRead(imagePath_obj);
                 var objectDetection = new ObjectDetection(modelPath_obj);
-                var result = objectDetection.ObjInference(image_obj, labelPath_obj, 0.6f);
+                var result_obj = objectDetection.ObjInference(image_obj, labelPath_obj, 0.6f);
 
                 Cv2.NamedWindow("Result Obj", WindowFlags.FreeRatio);
-                Cv2.ImShow("Result Obj", result);
+                Cv2.ImShow("Result Obj", result_obj);
+                Cv2.WaitKey();
+            }
+            if(mode == 2)
+            {
+                var imagePath_semseg = "C:/Users/thong/Desktop/Clavi_desktop_onnx/model_semseg/mixed_1.jpg";
+                var modelPath_semseg = "C:/Users/thong/Desktop/Clavi_desktop_onnx/model_semseg/fruit_semseg.onnx";
+                var labelPath_semseg = "C:/Users/thong/Desktop/Clavi_desktop_onnx/model_semseg/fruit_semseg_labels.txt";
+                var image_semseg = Cv2.ImRead(imagePath_semseg);
+                var semanticSegmentation = new SemanticSegmentation(modelPath_semseg);
+                var result_semseg = semanticSegmentation.semsegInference(image_semseg, labelPath_semseg, 0.6f, 0.8);
+
+                Cv2.NamedWindow("Result SemSeg", WindowFlags.FreeRatio);
+                Cv2.ImShow("Result SemSeg", result_semseg);
                 Cv2.WaitKey();
             }
         }
