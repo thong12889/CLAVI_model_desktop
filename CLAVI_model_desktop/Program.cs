@@ -23,10 +23,9 @@ namespace CLAVI_model_desktop
                 var objectDetection = new ObjectDetection(modelPath_obj);
                 var result = objectDetection.ObjInference(image_obj, labelPath_obj, 0.6f);
 
-                /*Cv2.NamedWindow("Result Obj", WindowFlags.FreeRatio);
+                Cv2.NamedWindow("Result Obj", WindowFlags.FreeRatio);
                 Cv2.ImShow("Result Obj", result);
-                Cv2.WaitKey();*/
-                Cv2.ImWrite("C:/Users/thong/Desktop/Clavi_desktop_onnx/model_obj/result.jpg", result);
+                Cv2.WaitKey();
             }
         }
     }
