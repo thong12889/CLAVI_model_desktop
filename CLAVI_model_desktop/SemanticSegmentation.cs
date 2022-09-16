@@ -1,7 +1,6 @@
 ﻿using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
-using OpenCvSharp.Dnn;
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -20,7 +19,7 @@ namespace CLAVI_model_desktop
             option.ExecutionMode = ExecutionMode.ORT_SEQUENTIAL;
             sess = new InferenceSession(modelPath, option);
         }
-        public Mat semsegInference(Mat image, string labelPath, float threshold, double opacity)
+        public Mat semsegInference(Mat image, string labelPath, double opacity)
         {
             int inputW = 2048;
             int inputH = 1024;

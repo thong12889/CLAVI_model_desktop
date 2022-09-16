@@ -217,6 +217,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Classification.cs" />
+    <Compile Include="InstanceSegmentation.cs" />
     <Compile Include="ObjectDetection.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
