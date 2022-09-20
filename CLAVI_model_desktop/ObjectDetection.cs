@@ -100,8 +100,6 @@ namespace CLAVI_model_desktop
 
                             var rescale_Xmin = candidate[idx][0] * dw;
                             var rescale_Ymin = candidate[idx][1] * dh;
-                            var rescale_Xmax = candidate[idx][2] * dw;
-                            var rescale_Ymax = candidate[idx][3] * dh;
 
                             //draw label
                             var result_text = labelList[label_value[idx]] + "|" + confi.ToString("0.00");

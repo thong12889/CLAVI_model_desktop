@@ -44,6 +44,7 @@ namespace CLAVI_model_desktop
                 var pred_dim = resultsArray[0].AsTensor<float>().Dimensions.ToArray();
                 float maxValue = pred_value.Max();
                 int maxIndex = pred_value.ToList().IndexOf(maxValue);
+                //var secondMax = pred_value.OrderByDescending(r => r).Skip(1).FirstOrDefault();
 
                 result_class = maxIndex;
                 result_score = pred_value[maxIndex];

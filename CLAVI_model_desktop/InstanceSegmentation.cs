@@ -20,12 +20,13 @@ namespace CLAVI_model_desktop
             option.ExecutionMode = ExecutionMode.ORT_SEQUENTIAL;
             sess = new InferenceSession(modelPath, option);
         }
-        public Mat insegInference(Mat image, string labelPath, float threshold)
+        public Mat insegInference(Mat image, string labelPath, float threshold, double opacity)
         {
             float nmsThresh = 0.4f;
             int inputW = 1333;
             int inputH = 800;
             Size imgSize = new Size(inputW, inputH);
+            Mat result = image.Clone();
 
             //Label file
             var label = File.ReadLines(labelPath);
@@ -33,7 +34,7 @@ namespace CLAVI_model_desktop
             var pallete = GenPalette(labelList.Length);
 
             Mat imageFloat = image.Resize(imgSize);
-            imageFloat.ConvertTo(imageFloat, MatType.CV_32FC1);
+            imageFloat = DataPreprocessing(imageFloat);
             var input = new DenseTensor<float>(MatToList(imageFloat), new[] { 1, 3, imgSize.Height, imgSize.Width });
 
             // Setup inputs and outputs
@@ -52,16 +53,88 @@ namespace CLAVI_model_desktop
                 var pred_value = resultsArray[0].AsEnumerable<float>().ToArray();
                 var pred_dim = resultsArray[0].AsTensor<float>().Dimensions.ToArray();
                 //Label
-                var labels_value = resultsArray[1].AsEnumerable<Int64>().ToArray();
+                var label_value = resultsArray[1].AsEnumerable<Int64>().ToArray();
                 //Mask
-                List<Mat> masks = new List<Mat>();
-                var masks_value = resultsArray[2].AsEnumerable<float>().ToArray();
-                var masks_dim = resultsArray[2].AsTensor<float>().Dimensions.ToArray();
+                var mask_value = resultsArray[2].AsEnumerable<float>().ToArray();
+                var mask_dim = resultsArray[2].AsTensor<float>().Dimensions.ToArray();
 
-                var (candidate, label_out, mask_out) = GetInstanceCandidate(pred_value, pred_dim, labels_value, masks_value, masks_dim, threshold);
+                var (candidate, label_out, mask_out) = GetInstanceCandidate(pred_value, pred_dim, label_value, mask_value, mask_dim, threshold);
+
+                if(candidate.Count != 0)
+                {
+                    //NMS
+                    List<Rect> bboxes = new List<Rect>();
+                    List<float> confidences = new List<float>();
+                    for (int i = 0; i < candidate.Count; i++)
+                    {
+                        Rect box = new Rect((int)candidate[i][0], (int)candidate[i][1],
+                           (int)(candidate[i][2] - candidate[i][0]), (int)(candidate[i][3] - candidate[i][1]));
+                        bboxes.Add(box);
+                        confidences.Add(candidate[i][4]);
+                    }
+                    int[] indices;
+                    CvDnn.NMSBoxes(bboxes, confidences, threshold, nmsThresh, out indices);
+
+                    if(indices != null)
+                    {
+                        for (int ids = 0; ids < indices.Length; ids++)
+                        {
+                            int idx = indices[ids];
+
+                            var dw = image.Width / (float)imgSize.Width;
+                            var dh = image.Height / (float)imgSize.Height;
+
+                            var rescale_Xmin = candidate[idx][0] * dw;
+                            var rescale_Ymin = candidate[idx][1] * dh;
+                            var rescale_Xmax = candidate[idx][2] * dw;
+                            var rescale_Ymax = candidate[idx][3] * dh;
+
+                            //draw bounding box
+                            Cv2.Rectangle(image, new Rect((int)rescale_Xmin, (int)rescale_Ymin, (int)(rescale_Xmax - rescale_Xmin), (int)(rescale_Ymax - rescale_Ymin)),
+                                new Scalar(pallete[label_value[idx]].Item0, pallete[label_value[idx]].Item1, pallete[label_value[idx]].Item2), 5);
+
+                            var mask = mask_out[idx].Resize(new Size(rescale_Xmax - rescale_Xmin, rescale_Ymax - rescale_Ymin));
+                            var gray = new Mat();
+                            Cv2.CvtColor(mask, gray, ColorConversionCodes.BGR2GRAY);
+                            OpenCvSharp.Point[][] contours;
+                            OpenCvSharp.HierarchyIndex[] hindex;
+                            Cv2.FindContours(gray, out contours, out hindex, RetrievalModes.CComp, ContourApproximationModes.ApproxNone);
+                            for(int i = 0; i < contours[0].Length; i++)
+                            {
+                                contours[0][i].X = contours[0][i].X + (int)rescale_Xmin;
+                                contours[0][i].Y = contours[0][i].Y + (int)rescale_Ymin;
+                            }
+                            Cv2.FillPoly(image, contours, new Scalar(pallete[label_value[idx]].Item0, pallete[label_value[idx]].Item1, pallete[label_value[idx]].Item2));
+                            Cv2.DrawContours(image, contours, -1, new Scalar(255, 255, 255), 1);
+                        }
+                        for (int ids = 0; ids < indices.Length; ids++)
+                        {
+                            int idx = indices[ids];
+                            var confi = candidate[idx][4];
+
+                            var dw = image.Width / (float)imgSize.Width;
+                            var dh = image.Height / (float)imgSize.Height;
+
+                            var rescale_Xmin = candidate[idx][0] * dw;
+                            var rescale_Ymin = candidate[idx][1] * dh;
+
+                            //draw label
+                            var result_text = labelList[label_value[idx]] + "|" + confi.ToString("0.00");
+                            var scale = 0.8;
+                            var thickness = 1;
+                            HersheyFonts font = HersheyFonts.HersheyDuplex;
+                            int baseLine;
+                            var textSize = Cv2.GetTextSize(result_text, font, scale, thickness, out baseLine);
+                            Cv2.Rectangle(image, new Point(rescale_Xmin + 4, rescale_Ymin + 4), new Point(rescale_Xmin + textSize.Width, rescale_Ymin + textSize.Height + 10),
+                                new Scalar(0, 0, 0), -1);
+                            Cv2.PutText(image, result_text, new Point(rescale_Xmin + 4, rescale_Ymin + textSize.Height + 4), font, scale,
+                                new Scalar(255, 255, 255), thickness);
+                        }
+                    }
+                    Cv2.AddWeighted(image, opacity, result, 1 - opacity, 0, result);
+                }
             }
-
-            return image;
+            return result;
         }
         public static (List<List<float>>, List<int>, List<Mat>) GetInstanceCandidate(float[] pred, int[] pred_dim, long[] labels, float[] masks, int[] masks_dim, float pred_thresh = 0.25f)
         {
@@ -93,14 +166,14 @@ namespace CLAVI_model_desktop
 
                         //masks
                         int cls_id = (int)labels[idlabelmask];
-                        var maskMats = ConvertInstanceSegmentationResult(idlabelmask, cls_id, masks, masks_dim, pred_thresh);
+                        var maskMats = ConvertInstanceSegmentationResult(idlabelmask, masks, masks_dim, pred_thresh);
                         masksCand.Add(maskMats);
                     }
                 }
             }
             return (candidate, labelCand, masksCand);
         }
-        public static Mat ConvertInstanceSegmentationResult(int id, int cls_id, float[] pred, int[] pred_dim, float threshold = 0.25f)
+        public static Mat ConvertInstanceSegmentationResult(int id, float[] pred, int[] pred_dim, float threshold)
         {
             
             Mat mat = new Mat(new Size(pred_dim[3], pred_dim[2]), MatType.CV_8UC3);
@@ -126,6 +199,21 @@ namespace CLAVI_model_desktop
                 }
             }
             return mat;
+        }
+        private Mat DataPreprocessing(Mat image)
+        {
+            Mat data = Mat.Zeros(image.Size(), MatType.CV_32FC3);
+            using (var rgbImage = new Mat())
+            {
+                Cv2.CvtColor(image, rgbImage, ColorConversionCodes.BGR2RGB);
+                rgbImage.ConvertTo(data, MatType.CV_32FC3, (float)(1 / 255.0));
+                var channelData = Cv2.Split(data);
+                channelData[0] = (channelData[0] - 0.485) / 0.229;
+                channelData[1] = (channelData[1] - 0.456) / 0.224;
+                channelData[2] = (channelData[2] - 0.406) / 0.225;
+                Cv2.Merge(channelData, data);
+            }
+            return data;
         }
         static Vec3b[] GenPalette(int classes)
         {

@@ -12,7 +12,7 @@ namespace CLAVI_model_desktop
     {
         static void Main(string[] args)
         {
-            int mode = 4;
+            int mode = 3;
 
             if(mode == 1)
             {
@@ -50,7 +50,11 @@ namespace CLAVI_model_desktop
                 var labelPath_inseg = "C:/Users/thong/Desktop/Clavi_desktop_onnx/model_inseg/technopro_inseg_labels.txt";
                 var image_inseg = Cv2.ImRead(imagePath_inseg);
                 var instanceSegmentation = new InstanceSegmentation(modelPath_inseg);
-                var result_inseg = instanceSegmentation.insegInference(image_inseg, labelPath_inseg, 0.6f);
+                var result_inseg = instanceSegmentation.insegInference(image_inseg, labelPath_inseg, 0.6f, 0.8);
+
+                Cv2.NamedWindow("Result Inseg", WindowFlags.FreeRatio);
+                Cv2.ImShow("Result Inseg", result_inseg);
+                Cv2.WaitKey();
             }
             if(mode == 4)
             {
@@ -60,14 +64,14 @@ namespace CLAVI_model_desktop
                 var labelPath_cls = "C:/Users/thong/Desktop/Clavi_desktop_onnx/model_cls/animals_cls_labels.txt";
                 var image_cls = Cv2.ImRead(imagePath_cls);
                 var classification = new Classification(modelPath_cls);
-                var result_cls = classification.clsInference(image_cls, 0.5f);
+                var (result_cls, result_score) = classification.clsInference(image_cls, 0.5f);
 
                 //Label file
                 var label = File.ReadLines(labelPath_cls);
                 var labelList = label.ToArray();
 
-                Console.WriteLine(labelList[result_cls.Item1]);
-                Console.WriteLine(result_cls.Item2.ToString("0.00"));
+                Console.WriteLine(labelList[result_cls]);
+                Console.WriteLine(result_score.ToString("0.00"));
                 Console.ReadLine();
             }
         }
