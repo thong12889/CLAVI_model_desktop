@@ -217,6 +217,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Anomaly.cs" />
     <Compile Include="Classification.cs" />
     <Compile Include="InstanceSegmentation.cs" />
     <Compile Include="ObjectDetection.cs" />

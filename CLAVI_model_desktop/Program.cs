@@ -12,7 +12,7 @@ namespace CLAVI_model_desktop
     {
         static void Main(string[] args)
         {
-            int mode = 3;
+            int mode = 5;
 
             if(mode == 1)
             {
@@ -73,6 +73,18 @@ namespace CLAVI_model_desktop
                 Console.WriteLine(labelList[result_cls]);
                 Console.WriteLine(result_score.ToString("0.00"));
                 Console.ReadLine();
+            }
+            if (mode == 5)
+            {
+                //Anomaly detection
+                var imagePath_ano = "C:/Users/DEMO1/Desktop/anomaly_model/img_000015_bad.png";
+                var modelPath_ano = "C:/Users/DEMO1/Desktop/anomaly_model/model.onnx";
+                var image_ano = Cv2.ImRead(imagePath_ano);
+                var anomaly = new Anomaly(modelPath_ano);
+                var result_ano = anomaly.AnomalyInference(image_ano);
+
+                Cv2.ImShow("Result Anomaly", result_ano);
+                Cv2.WaitKey();
             }
         }
     }
