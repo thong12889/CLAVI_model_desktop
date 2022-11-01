@@ -99,10 +99,13 @@ namespace CLAVI_model_desktop
                             OpenCvSharp.Point[][] contours;
                             OpenCvSharp.HierarchyIndex[] hindex;
                             Cv2.FindContours(gray, out contours, out hindex, RetrievalModes.CComp, ContourApproximationModes.ApproxNone);
-                            for(int i = 0; i < contours[0].Length; i++)
+                            for(int i = 0; i < contours.Length; i++)
                             {
-                                contours[0][i].X = contours[0][i].X + (int)rescale_Xmin;
-                                contours[0][i].Y = contours[0][i].Y + (int)rescale_Ymin;
+                                for(int j = 0; j < contours[i].Length; j++)
+                                {
+                                    contours[i][j].X = contours[i][j].X + (int)rescale_Xmin;
+                                    contours[i][j].Y = contours[i][j].Y + (int)rescale_Ymin;
+                                }
                             }
                             Cv2.FillPoly(image, contours, new Scalar(pallete[label_value[idx]].Item0, pallete[label_value[idx]].Item1, pallete[label_value[idx]].Item2));
                             Cv2.DrawContours(image, contours, -1, new Scalar(255, 255, 255), 1);

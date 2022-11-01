@@ -12,7 +12,7 @@ namespace CLAVI_model_desktop
     {
         static void Main(string[] args)
         {
-            int mode = 5;
+            int mode = 3;
 
             if(mode == 1)
             {
@@ -45,9 +45,9 @@ namespace CLAVI_model_desktop
             if(mode == 3)
             {
                 //Instance Segmentation
-                var imagePath_inseg = "C:/Users/thong/Desktop/Clavi_desktop_onnx/model_inseg/img_18.jpg";
-                var modelPath_inseg = "C:/Users/thong/Desktop/Clavi_desktop_onnx/model_inseg/technopro_inseg.onnx";
-                var labelPath_inseg = "C:/Users/thong/Desktop/Clavi_desktop_onnx/model_inseg/technopro_inseg_labels.txt";
+                var imagePath_inseg = "C:/Users/thong/Desktop/Clavi_desktop_onnx/model_inseg/00000003.JPG";
+                var modelPath_inseg = "C:/Users/thong/Desktop/Clavi_desktop_onnx/model_inseg/corrosion.onnx";
+                var labelPath_inseg = "C:/Users/thong/Desktop/Clavi_desktop_onnx/model_inseg/corrosion_labels.txt";
                 var image_inseg = Cv2.ImRead(imagePath_inseg);
                 var instanceSegmentation = new InstanceSegmentation(modelPath_inseg);
                 var result_inseg = instanceSegmentation.insegInference(image_inseg, labelPath_inseg, 0.6f, 0.8);
